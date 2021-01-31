@@ -1,20 +1,41 @@
-from enum import IntEnum
+from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
 from typing import List
 from uuid import uuid4
 
 
-class ItemStatus(IntEnum):
-    UNAVAILABLE = 0
-    AVAILABLE = 1
+class OrderStatus(Enum):
+    PUBLISHED = 'PUB'
+    APPROVED = 'APP'
+    CANCELED = 'CAN'
+    COMPLETED = 'COM'
+
+
+@dataclass(frozen=True)
+class Order:
+    order_id: str
+    order_datetime: datetime
+    customer_phone: str
+    store_id: uuid4
+    item_ids: List[uuid4]
+    order_status: OrderStatus
 
 
 class Item:
-    def __init__(self, name: str, price: float, quantity: int, status: ItemStatus = None, item_id: uuid4 = None):
+    def __init__(self, name: str, price: float, quantity: int, item_id: uuid4 = None):
         self.id = item_id or uuid4()
-        self.name = name,
-        self.price = price,
-        self.quantity = quantity,
-        self.status = status or ItemStatus.UNAVAILABLE.value
+        self.name = name
+        self.price = price
+        self.quantity = quantity
+
+    def __eq__(self, other):
+        if not isinstance(other, Item):
+            return False
+        return other.id == self.id
+
+    def __hash__(self):
+        return hash(self.id)
 
 
 class Store:
@@ -23,8 +44,51 @@ class Store:
         self.name = name
         self._items: List[Item] = list()
 
-    def add_items(self, items: List):
-        self._items.extend(items)
+    def __eq__(self, other):
+        if not isinstance(other, Store):
+            return False
+        return other.id == self.id
 
-    def list_items(self):
+    def __hash__(self):
+        return hash(self.id)
+
+    def add_item(self, item: Item) -> uuid4:
+        self._items.append(item)
+        return item.id
+
+    def delete_item(self, item: Item) -> Item:
+        self._items.remove(item)
+        return item
+
+    def list_items(self) -> List[Item]:
         return self._items
+
+    def get_item(self, item_id: uuid4) -> Item:
+        try:
+            item = next(item for item in self._items if item.id == item_id)
+            return item
+        except StopIteration:
+            return None
+
+    def set_item_quantity(self, item_id: uuid4, quantity: int):
+        item = self.get_item(item_id)
+        if item:
+            item.quantity = quantity
+
+    def approved(self, order: Order):
+        if self.can_approved(order):
+            for item_id in order.item_ids:
+                item = self.get_item(item_id)
+                item.quantity -= 1
+
+    def can_approved(self, order: Order) -> bool:
+        if self.id != order.store_id:
+            return False
+        item_ids = set(order.item_ids)
+        ordered_counts = {item_id: order.item_ids.count(item_id) for item_id in item_ids}
+
+        for item_id, ordered_count in ordered_counts.items():
+            if not (self.get_item(item_id) and self.get_item(item_id).quantity >= ordered_count):
+                return False
+
+        return True
