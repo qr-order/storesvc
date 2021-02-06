@@ -5,11 +5,23 @@ from typing import List
 from uuid import uuid4
 
 
+class CannotApprove(Exception):
+    pass
+
+
+class OutOfStock(CannotApprove):
+    pass
+
+
+class InvalidOrder(CannotApprove):
+    pass
+
+
 class OrderStatus(Enum):
-    PUBLISHED = 'PUB'
-    APPROVED = 'APP'
-    CANCELED = 'CAN'
-    COMPLETED = 'COM'
+    PUBLISHED = 0
+    APPROVED = 1
+    CANCELED = 2
+    COMPLETED = 3
 
 
 @dataclass(frozen=True)
@@ -75,20 +87,23 @@ class Store:
         if item:
             item.quantity = quantity
 
-    def approved(self, order: Order):
-        if self.can_approved(order):
-            for item_id in order.item_ids:
-                item = self.get_item(item_id)
-                item.quantity -= 1
-
-    def can_approved(self, order: Order) -> bool:
+    def approve(self, order: Order):
         if self.id != order.store_id:
-            return False
+            raise InvalidOrder(
+                f'store id is not matched : store_id of the order({order.order_id}) is {order.store_id} '
+                f'but current store_id is {self.id}'
+            )
+
         item_ids = set(order.item_ids)
         ordered_counts = {item_id: order.item_ids.count(item_id) for item_id in item_ids}
 
         for item_id, ordered_count in ordered_counts.items():
-            if not (self.get_item(item_id) and self.get_item(item_id).quantity >= ordered_count):
-                return False
-
-        return True
+            if item := self.get_item(item_id):
+                if item.quantity < ordered_count:
+                    raise OutOfStock(
+                        f'Out of stock for store_id {self.id}, item {item.id}, order_id {order.order_id}'
+                    )
+                else:
+                    item.quantity -= 1
+            else:
+                raise InvalidOrder(f'item does not exist : item_id of the order({order.order_id}) is {item_id}')

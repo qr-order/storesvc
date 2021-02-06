@@ -1,8 +1,9 @@
+import pytest
 from datetime import datetime
 from typing import List
 from uuid import uuid4
 
-from model import Item, Store, Order, OrderStatus
+from model import Item, Store, Order, OrderStatus, OutOfStock, InvalidOrder
 
 
 def make_store(items: List[Item]):
@@ -12,7 +13,7 @@ def make_store(items: List[Item]):
     return store
 
 
-def test_approved_an_order_reduces_item_quantity():
+def test_approve_an_order_reduces_item_quantity():
     item = Item(name="Item_001", price=5000, quantity=10)
     store = make_store([item])
 
@@ -25,7 +26,7 @@ def test_approved_an_order_reduces_item_quantity():
         order_status=OrderStatus.PUBLISHED.value
     )
 
-    store.approved(order)
+    store.approve(order)
 
     assert store.get_item(item.id).quantity == 9
 
@@ -44,21 +45,26 @@ def make_store_and_order(item_quantity: int, order_quantity: int, order_store_id
     return store, order
 
 
-def test_can_approved_if_item_quantity_greater_than_ordered():
-    large_store, small_order = make_store_and_order(5, 4)
-    assert large_store.can_approved(small_order)
-
-
-def test_cannot_approved_if_item_quantity_smaller_than_ordered():
-    small_store, large_order = make_store_and_order(4, 5)
-    assert small_store.can_approved(large_order) is False
-
-
-def test_cannot_approved_if_item_quantity_equal_to_ordered():
+def test_can_approve_if_quantity_equal_to_ordered():
     store, order = make_store_and_order(5, 5)
-    assert store.can_approved(order)
+    store.approve(order)
 
 
-def test_cannot_approved_if_store_id_do_not_match():
+def test_raise_out_of_stock_exception_if_quantity_smaller_than_ordered():
+    small_store, large_order = make_store_and_order(4, 5)
+    with pytest.raises(OutOfStock, match=large_order.order_id):
+        small_store.approve(large_order)
+
+
+def test_raise_invalid_order_if_store_id_is_not_matched():
     store, mismatched_order = make_store_and_order(5, 5, uuid4())
-    assert store.can_approved(mismatched_order) is False
+    with pytest.raises(InvalidOrder, match=mismatched_order.order_id):
+        store.approve(mismatched_order)
+
+
+def test_raise_invalid_order_if_item_does_not_exist():
+    store, order = make_store_and_order(5, 5)
+    item = store.list_items()[0]
+    store.delete_item(item)
+    with pytest.raises(InvalidOrder, match=order.order_id):
+        store.approve(order)
