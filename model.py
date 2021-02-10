@@ -35,8 +35,8 @@ class Order:
 
 
 class Item:
-    def __init__(self, name: str, price: float, quantity: int, item_id: uuid4 = None):
-        self.id = item_id or uuid4()
+    def __init__(self, name: str, price: float, quantity: int, id: uuid4 = None):
+        self.id = str(id) if id else str(uuid4())
         self.name = name
         self.price = price
         self.quantity = quantity
@@ -44,15 +44,15 @@ class Item:
     def __eq__(self, other):
         if not isinstance(other, Item):
             return False
-        return other.id == self.id
+        return str(other.id) == str(self.id)
 
     def __hash__(self):
         return hash(self.id)
 
 
 class Store:
-    def __init__(self, name: str, store_id: uuid4 = None):
-        self.id = store_id or uuid4()
+    def __init__(self, name: str, id: uuid4 = None):
+        self.id = str(id) if id else str(uuid4())
         self.name = name
         self._items: List[Item] = list()
 
