@@ -2,7 +2,7 @@ import model
 import repository
 
 
-def test_repository_can_save_a_batch(session):
+def test_repository_can_save_a_store(session):
     store = model.Store(name='Store_001')
 
     repo = repository.SqlAlchemyRepository(session)
