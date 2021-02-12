@@ -1,11 +1,7 @@
 import abc
-from sqlalchemy.orm.exc import NoResultFound
 from uuid import uuid4
 
 import model
-
-class InvalidStoreId(Exception):
-    pass
 
 
 class AbstractRepository(abc.ABC):
@@ -26,10 +22,7 @@ class SqlAlchemyRepository(AbstractRepository):
         self.session.add(store)
 
     def get(self, id: str) -> model.Store:
-        try:
-            return self.session.query(model.Store).filter_by(id=id).one()
-        except NoResultFound:
-            raise InvalidStoreId(f'Invalid store id {id}')
+        return self.session.query(model.Store).filter_by(id=id).one()
 
     def list(self):
         return self.session.query(model.Store).all()
