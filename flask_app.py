@@ -46,15 +46,15 @@ def handle_orders_endpoint(store_id):
     # ex) store_id in user.store_ids
     order_id = request.json['order_id']
     order_status = request.json['order_status']
-    if order_status == 'approve':
+    if order_status == model.OrderStatus.APPROVED.value:
         try:
             services.approve_order(order_id, repo, order_provider, session)
         except (model.OutOfStock, model.InvalidOrder) as e:
             return jsonify({'message': str(e)}), 400
         return jsonify({'result': 'success'}), 200
-    elif order_status == 'cancel':
+    elif order_status == model.OrderStatus.CANCELED.value:
         # Todo : Publish CancelOrderByStore Event
         pass
-    elif order_status == 'complete':
+    elif order_status == model.OrderStatus.COMPLETED.value:
         # Todo : Publish CompleteOrder Event
         pass
