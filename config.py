@@ -13,3 +13,9 @@ def get_postgres_uri():
     password = os.environ.get('DB_PASSWORD', 'abc123')
     user, db_name = 'storesvc', 'storesvc'
     return f"postgresql://{user}:{password}@{host}:{port}/{db_name}"
+
+
+def get_order_svc_url():
+    host = os.environ.get('ORDER_SVC_HOST', 'localhost')
+    port = 5006 if host == 'localhost' else 80
+    return f'http://{host}:{port}'
