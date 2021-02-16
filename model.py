@@ -29,8 +29,8 @@ class Order:
     order_id: str
     order_datetime: datetime
     customer_phone: str
-    store_id: uuid4
-    item_ids: List[uuid4]
+    store_id: str
+    item_ids: List[str]
     order_status: OrderStatus
 
 
@@ -94,6 +94,11 @@ class Store:
                 f'but current store_id is {self.id}'
             )
 
+        if order.order_status != OrderStatus.PUBLISHED.value:
+            raise InvalidOrder(
+                f'The order cannot be approved : the order status is {order.order_status}'
+            )
+
         item_ids = set(order.item_ids)
         ordered_counts = {item_id: order.item_ids.count(item_id) for item_id in item_ids}
 
@@ -104,6 +109,6 @@ class Store:
                         f'Out of stock for store_id {self.id}, item {item.id}, order_id {order.order_id}'
                     )
                 else:
-                    item.quantity -= 1
+                    item.quantity -= ordered_count
             else:
                 raise InvalidOrder(f'item does not exist : item_id of the order({order.order_id}) is {item_id}')

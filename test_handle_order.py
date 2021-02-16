@@ -31,7 +31,7 @@ def test_approve_an_order_reduces_item_quantity():
     assert store.get_item(item.id).quantity == 9
 
 
-def make_store_and_order(item_quantity: int, order_quantity: int, order_store_id: uuid4 = None):
+def make_store_and_order(item_quantity: int, order_quantity: int, order_store_id: uuid4 = None, status=None):
     item = Item(name="Item_001", price=5000, quantity=item_quantity)
     store = make_store([item])
     order = Order(
@@ -40,7 +40,7 @@ def make_store_and_order(item_quantity: int, order_quantity: int, order_store_id
         customer_phone="000-0000-0000",
         store_id=order_store_id or store.id,
         item_ids=[item.id for _ in range(order_quantity)],
-        order_status=OrderStatus.PUBLISHED.value
+        order_status=status or OrderStatus.PUBLISHED.value
     )
     return store, order
 
@@ -68,3 +68,9 @@ def test_raise_invalid_order_if_item_does_not_exist():
     store.delete_item(item)
     with pytest.raises(InvalidOrder, match=order.order_id):
         store.approve(order)
+
+
+def test_raise_invalid_order_if_order_is_not_published():
+    store, approved_order = make_store_and_order(5, 5, uuid4(), OrderStatus.APPROVED.value)
+    with pytest.raises(InvalidOrder, match=approved_order.order_id):
+        store.approve(approved_order)

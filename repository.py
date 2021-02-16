@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import model
 
+
 class InvalidStoreId(Exception):
     pass
 
