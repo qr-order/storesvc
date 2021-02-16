@@ -8,9 +8,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker, clear_mappers
 
-import config
-import model
-from orm import metadata, start_mappers
+from storesvc import config
+from storesvc.domain import model
+from storesvc.adapters.orm import metadata, start_mappers
 
 
 @pytest.fixture

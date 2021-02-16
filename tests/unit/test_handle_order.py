@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import List
 from uuid import uuid4
 
-from model import Item, Store, Order, OrderStatus, OutOfStock, InvalidOrder
+from storesvc.domain.model import Item, Store, Order, OrderStatus, OutOfStock, InvalidOrder
 
 
 def make_store(items: List[Item]):

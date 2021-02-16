@@ -1,4 +1,4 @@
-import model
+from storesvc.domain import model
 
 
 def test_item_mapper_can_load_items(session):

@@ -2,8 +2,8 @@ import pytest
 import requests
 from uuid import uuid4
 
-import config
-import model
+from storesvc import config
+from storesvc.domain import model
 
 
 class TestGetItemsApi:
