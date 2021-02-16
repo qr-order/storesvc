@@ -1,11 +1,9 @@
 from sqlalchemy import (
-    Table, MetaData, Column, Integer, String, Date, ForeignKey, CHAR, Float
+    Table, MetaData, Column, Integer, String, ForeignKey, CHAR, Float
 )
 from sqlalchemy.orm import mapper, relationship
-from sqlalchemy.dialects.postgresql import UUID
 
-import model
-
+from storesvc.domain import model
 
 metadata = MetaData()
 

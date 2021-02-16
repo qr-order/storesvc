@@ -2,7 +2,7 @@ import abc
 from sqlalchemy.orm.exc import NoResultFound
 from uuid import uuid4
 
-import model
+from storesvc.domain import model
 
 
 class InvalidStoreId(Exception):

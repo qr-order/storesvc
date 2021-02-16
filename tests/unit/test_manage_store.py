@@ -1,4 +1,4 @@
-from model import Store, Item
+from storesvc.domain.model import Store, Item
 
 
 def test_add_item():

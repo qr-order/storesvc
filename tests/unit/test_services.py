@@ -1,10 +1,9 @@
 import datetime
 from typing import List
 
-import model
-import provider
-import repository
-import services
+from storesvc.domain import model
+from storesvc.adapters import repository, provider
+from storesvc.service_layer import services
 
 
 class FakeSession():

@@ -1,10 +1,10 @@
 import abc
-import config
 import datetime
 import requests
 from typing import List
 
-import model
+from storesvc.domain import model
+from storesvc import config
 
 
 class InvalidOrderId(Exception):

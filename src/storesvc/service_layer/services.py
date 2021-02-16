@@ -1,5 +1,5 @@
-from repository import AbstractRepository
-from provider import AbstractOrderProvider
+from storesvc.adapters.repository import AbstractRepository
+from storesvc.adapters.provider import AbstractOrderProvider
 
 
 def approve_order(order_id: str, repo: AbstractRepository, provider: AbstractOrderProvider, session):
