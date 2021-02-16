@@ -19,6 +19,7 @@ stores = Table(
     'stores', metadata,
     Column('id', CHAR(36), primary_key=True),
     Column('name', String(255)),
+    Column('version_number', Integer, nullable=False, server_default='0'),
 )
 
 store_items_mappings = Table(
