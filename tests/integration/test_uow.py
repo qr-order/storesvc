@@ -1,5 +1,9 @@
 import pytest
+import threading
+import time
+import traceback
 from datetime import datetime
+from typing import List
 
 from storesvc.domain.model import Store, Item, Order, OrderStatus
 from storesvc.service_layer import unit_of_work
@@ -76,3 +80,65 @@ def test_rolls_back_on_error(session_factory):
     new_session = session_factory()
     rows = list(new_session.execute('SELECT * FROM "stores"'))
     assert rows == []
+
+
+def try_to_approve(store_id: str, order: Order, exceptions):
+    try:
+        with unit_of_work.SqlAlchemyUnitOfWork() as uow:
+            store = uow.stores.get(id=store_id)
+            store.approve(order)
+            time.sleep(0.2)
+            uow.commit()
+    except Exception as e:
+        print(traceback.format_exc())
+        exceptions.append(e)
+
+
+def test_concurrent_approve_to_version_are_not_allowed(postgres_session_factory):
+    store = Store(name='Store_001')
+    item = Item(name='Itme_001', price=1000.0, quantity=10)
+    store.add_item(item)
+    session = postgres_session_factory()
+    insert_store(session, store)
+    session.commit()
+
+    order1 = Order(
+        order_id='o1',
+        order_datetime=datetime.now(),
+        customer_phone='01012341234',
+        store_id=store.id,
+        item_ids=[item.id],
+        order_status=OrderStatus.PUBLISHED.value
+    )
+    order2 = Order(
+        order_id='o2',
+        order_datetime=datetime.now(),
+        customer_phone='01012341234',
+        store_id=store.id,
+        item_ids=[item.id],
+        order_status=OrderStatus.PUBLISHED.value
+    )
+    exceptions: List[Exception] = []
+    try_to_approve_order1 = lambda: try_to_approve(store.id, order1, exceptions)
+    try_to_approve_order2 = lambda: try_to_approve(store.id, order2, exceptions)
+    thread1 = threading.Thread(target=try_to_approve_order1)
+    thread2 = threading.Thread(target=try_to_approve_order2)
+    thread1.start()
+    thread2.start()
+    thread1.join()
+    thread2.join()
+
+    [[version]] = session.execute(
+        'SELECT version_number FROM stores WHERE id=:store_id',
+        dict(store_id=store.id)
+    )
+    assert version == 1
+    [exception] = exceptions
+    assert 'could not serialize access due to concurrent update' in str(exception)
+
+    [[quantity]] = session.execute(
+        'SELECT quantity FROM items WHERE id=:item_id',
+        dict(item_id=item.id)
+    )
+    assert quantity == item.quantity - 1
+

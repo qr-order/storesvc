@@ -51,10 +51,11 @@ class Item:
 
 
 class Store:
-    def __init__(self, name: str, id: uuid4 = None):
+    def __init__(self, name: str, id: uuid4 = None, version_number: int = 0):
         self.id = str(id) if id else str(uuid4())
         self.name = name
         self._items: List[Item] = list()
+        self.version_number = version_number
 
     def __eq__(self, other):
         if not isinstance(other, Store):
@@ -112,3 +113,4 @@ class Store:
                     item.quantity -= ordered_count
             else:
                 raise InvalidOrder(f'item does not exist : item_id of the order({order.order_id}) is {item_id}')
+        self.version_number += 1
