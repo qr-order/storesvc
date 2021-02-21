@@ -6,6 +6,7 @@ from sqlalchemy.orm.session import Session
 
 from storesvc import config
 from storesvc.adapters import repository
+from storesvc.service_layer import messagebus
 
 
 class AbstractUnitOfWork(abc.ABC):
@@ -17,8 +18,18 @@ class AbstractUnitOfWork(abc.ABC):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.rollback()
 
-    @abc.abstractmethod
     def commit(self):
+        self._commit()
+        self.publish_events()
+
+    def publish_events(self):
+        for store in self.stores.seen:
+            while store.events:
+                event = store.events.pop(0)
+                messagebus.handle(event)
+
+    @abc.abstractmethod
+    def _commit(self):
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -45,7 +56,7 @@ class SqlAlchemyUnitOfWork(AbstractUnitOfWork):
         super().__exit__(exc_type, exc_val, exc_tb)
         self.session.close()
 
-    def commit(self):
+    def _commit(self):
         self.session.commit()
 
     def rollback(self):
