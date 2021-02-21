@@ -1,5 +1,5 @@
 from sqlalchemy import (
-    Table, MetaData, Column, Integer, String, ForeignKey, CHAR, Float
+    Table, MetaData, Column, Integer, String, ForeignKey, CHAR, Float, event
 )
 from sqlalchemy.orm import mapper, relationship
 
@@ -39,3 +39,8 @@ def start_mappers():
             collection_class=list,
         )
     })
+
+
+@event.listens_for(model.Store, 'load')
+def receive_load(store, _):
+    store.events = []

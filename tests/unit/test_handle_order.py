@@ -3,7 +3,9 @@ from datetime import datetime
 from typing import List
 from uuid import uuid4
 
-from storesvc.domain.model import Item, Store, Order, OrderStatus, OutOfStock, InvalidOrder
+from storesvc.domain.model import Item, Store, OutOfStock, InvalidOrder
+from storesvc.domain.value import OrderStatus, Order
+from storesvc.domain import events
 
 
 def make_store(items: List[Item]):
@@ -13,7 +15,7 @@ def make_store(items: List[Item]):
     return store
 
 
-def test_approve_an_order_reduces_item_quantity():
+def test_approve_an_order_reduces_item_quantity_and_make_approved_order_event():
     item = Item(name="Item_001", price=5000, quantity=10)
     store = make_store([item])
 
@@ -29,6 +31,7 @@ def test_approve_an_order_reduces_item_quantity():
     store.approve(order)
 
     assert store.get_item(item.id).quantity == 9
+    assert store.events[-1] == events.ApprovedOrder(order=order)
 
 
 def make_store_and_order(item_quantity: int, order_quantity: int, order_store_id: uuid4 = None, status=None):

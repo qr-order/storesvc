@@ -1,8 +1,9 @@
-from dataclasses import dataclass
-from datetime import datetime
-from enum import Enum
+from __future__ import annotations
 from typing import List
 from uuid import uuid4
+
+from storesvc.domain import events
+from storesvc.domain.value import OrderStatus, Order
 
 
 class CannotApprove(Exception):
@@ -15,23 +16,6 @@ class OutOfStock(CannotApprove):
 
 class InvalidOrder(CannotApprove):
     pass
-
-
-class OrderStatus(Enum):
-    PUBLISHED = 0
-    APPROVED = 1
-    CANCELED = 2
-    COMPLETED = 3
-
-
-@dataclass(frozen=True)
-class Order:
-    order_id: str
-    order_datetime: datetime
-    customer_phone: str
-    store_id: str
-    item_ids: List[str]
-    order_status: OrderStatus
 
 
 class Item:
@@ -56,6 +40,7 @@ class Store:
         self.name = name
         self._items: List[Item] = list()
         self.version_number = version_number
+        self.events = []  # type: List[events.Event]
 
     def __eq__(self, other):
         if not isinstance(other, Store):
@@ -111,6 +96,7 @@ class Store:
                     )
                 else:
                     item.quantity -= ordered_count
+                    self.events.append(events.ApprovedOrder(order=order))
             else:
                 raise InvalidOrder(f'item does not exist : item_id of the order({order.order_id}) is {item_id}')
         self.version_number += 1

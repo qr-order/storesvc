@@ -5,7 +5,8 @@ import traceback
 from datetime import datetime
 from typing import List
 
-from storesvc.domain.model import Store, Item, Order, OrderStatus
+from storesvc.domain.model import Store, Item
+from storesvc.domain.value import OrderStatus, Order
 from storesvc.service_layer import unit_of_work
 
 
